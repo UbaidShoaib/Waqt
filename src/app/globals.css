@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Overridden per tenant via inline style on the booking/embed page
+     (TRD §10: server-injected CSS custom properties). */
+  --brand-color: #0f172a;
+}
