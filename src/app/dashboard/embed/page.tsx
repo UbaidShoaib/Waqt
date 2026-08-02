@@ -1,13 +1,12 @@
-import { redirect } from "next/navigation";
 import { getOwnedBusiness } from "@/lib/supabase/server";
-import LogoutButton from "@/components/auth/LogoutButton";
+import AddDomainForm from "@/components/dashboard/AddDomainForm";
+import DomainRowActions from "@/components/dashboard/DomainRowActions";
 
 // Embed-code generator (TRD Flow E). Snippet is inert until at least one
 // domain is whitelisted (TRD §19 confirmed default).
 export default async function EmbedSettingsPage() {
-  const { user, business, supabase } = await getOwnedBusiness();
-  if (!user) redirect("/login");
-  if (!business) redirect("/onboarding");
+  const { business, supabase } = await getOwnedBusiness();
+  if (!business) return null;
 
   const { data: domains } = await supabase
     .from("business_allowed_domains")
@@ -21,11 +20,8 @@ export default async function EmbedSettingsPage() {
   ].join("\n");
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Embed your booking widget</h1>
-        <LogoutButton />
-      </div>
+    <>
+      <h2 className="text-lg font-medium">Embed your booking widget</h2>
 
       <section className="space-y-2">
         <h2 className="font-medium">1. Allowed domains</h2>
@@ -33,9 +29,12 @@ export default async function EmbedSettingsPage() {
           The widget only renders on domains you list here. Add www and the
           bare domain separately.
         </p>
-        <ul className="text-sm">
+        <ul className="divide-y rounded-lg border">
           {(domains ?? []).map((d) => (
-            <li key={d.id}>{d.domain}</li>
+            <li key={d.id} className="flex items-center justify-between p-3 text-sm">
+              <span>{d.domain}</span>
+              <DomainRowActions businessId={business.id} domainId={d.id} />
+            </li>
           ))}
         </ul>
         {(domains ?? []).length === 0 && (
@@ -43,7 +42,7 @@ export default async function EmbedSettingsPage() {
             No domains yet — your embed snippet is inactive until you add one.
           </p>
         )}
-        {/* TODO Week 4: add/remove domain form → /api/businesses/:id/allowed-domains */}
+        <AddDomainForm businessId={business.id} />
       </section>
 
       <section className="space-y-2">
@@ -52,6 +51,6 @@ export default async function EmbedSettingsPage() {
           {snippet}
         </pre>
       </section>
-    </main>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 // Session-scoped Supabase client for authenticated (owner) routes.
 // Queries run as the logged-in user → RLS applies (TRD §9 Layer 1).
+import { cache } from "react";
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -31,7 +32,7 @@ export function createClient() {
  * business_id is derived from the session, NEVER read from client input.
  * Every authenticated route must use this instead of trusting the request.
  */
-export async function getOwnedBusiness() {
+export const getOwnedBusiness = cache(async function getOwnedBusiness() {
   const supabase = createClient();
   const {
     data: { user },
@@ -45,4 +46,4 @@ export async function getOwnedBusiness() {
     .single();
 
   return { user, business, supabase };
-}
+});

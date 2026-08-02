@@ -1,15 +1,13 @@
-import { redirect } from "next/navigation";
 import { getOwnedBusiness } from "@/lib/supabase/server";
-import LogoutButton from "@/components/auth/LogoutButton";
+import BookingActions from "@/components/dashboard/BookingActions";
 
 // Owner dashboard (TRD Flow D): today/upcoming bookings, cancel/complete/
 // mark-paid actions. Session-scoped queries — RLS applies.
 export default async function DashboardPage() {
-  const { user, business, supabase } = await getOwnedBusiness();
-  if (!user) redirect("/login");
-  if (!business) redirect("/onboarding");
+  const { business, supabase } = await getOwnedBusiness();
+  if (!business) return null;
 
-  const { data: bookings } = await supabase
+  const { data: rows } = await supabase
     .from("bookings")
     .select(
       "id, starts_at, status, payment_status, source, services(name), customers(name, phone)"
@@ -19,26 +17,49 @@ export default async function DashboardPage() {
     .order("starts_at")
     .limit(50);
 
+  // Supabase infers many-to-one joins as arrays without generated DB types;
+  // PostgREST actually returns a single object for these FK relations.
+  const bookings = (rows ?? []) as unknown as {
+    id: string;
+    starts_at: string;
+    status: "confirmed" | "cancelled" | "completed" | "no_show";
+    payment_status: "unpaid" | "paid";
+    source: string;
+    services: { name: string } | null;
+    customers: { name: string; phone: string | null } | null;
+  }[];
+
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{business.name} — upcoming</h1>
-        <LogoutButton />
-      </div>
+    <>
+      <h2 className="text-lg font-medium">Upcoming bookings</h2>
       <ul className="divide-y rounded-lg border">
-        {(bookings ?? []).map((b) => (
-          <li key={b.id} className="flex items-center justify-between p-3 text-sm">
-            <span>{new Date(b.starts_at).toLocaleString()}</span>
-            <span className="text-slate-500">
-              {b.status} · {b.payment_status} · via {b.source}
-            </span>
+        {bookings.map((b) => (
+          <li
+            key={b.id}
+            className="flex flex-col gap-2 p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <div>
+                {new Date(b.starts_at).toLocaleString()} — {b.services?.name}
+              </div>
+              <div className="text-slate-500">
+                {b.customers?.name} · {b.customers?.phone}
+              </div>
+              <div className="text-slate-500">
+                {b.status} · {b.payment_status} · via {b.source}
+              </div>
+            </div>
+            <BookingActions
+              bookingId={b.id}
+              status={b.status}
+              paymentStatus={b.payment_status}
+            />
           </li>
         ))}
-        {(bookings ?? []).length === 0 && (
+        {bookings.length === 0 && (
           <li className="p-3 text-sm text-slate-500">No upcoming bookings.</li>
         )}
       </ul>
-      {/* TODO Week 2: cancel / complete / mark-paid actions → PATCH /api/bookings/:id */}
-    </main>
+    </>
   );
 }
