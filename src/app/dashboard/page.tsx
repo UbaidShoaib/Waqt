@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getOwnedBusiness } from "@/lib/supabase/server";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 // Owner dashboard (TRD Flow D): today/upcoming bookings, cancel/complete/
 // mark-paid actions. Session-scoped queries — RLS applies.
@@ -20,7 +21,10 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-6">
-      <h1 className="text-2xl font-semibold">{business.name} — upcoming</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">{business.name} — upcoming</h1>
+        <LogoutButton />
+      </div>
       <ul className="divide-y rounded-lg border">
         {(bookings ?? []).map((b) => (
           <li key={b.id} className="flex items-center justify-between p-3 text-sm">

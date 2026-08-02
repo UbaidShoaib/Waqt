@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getOwnedBusiness } from "@/lib/supabase/server";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 // Embed-code generator (TRD Flow E). Snippet is inert until at least one
 // domain is whitelisted (TRD §19 confirmed default).
@@ -21,7 +22,10 @@ export default async function EmbedSettingsPage() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-6">
-      <h1 className="text-2xl font-semibold">Embed your booking widget</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Embed your booking widget</h1>
+        <LogoutButton />
+      </div>
 
       <section className="space-y-2">
         <h2 className="font-medium">1. Allowed domains</h2>
