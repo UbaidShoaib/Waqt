@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { createAdminClient, getPublicBusinessBySlug } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
-
-const createBookingSchema = z.object({
-  service_id: z.string().uuid(),
-  starts_at: z.string().datetime(),
-  customer: z.object({
-    name: z.string().min(1).max(120),
-    phone: z.string().max(32).optional(),
-    email: z.string().email().optional(),
-    preferred_channel: z.enum(["whatsapp", "sms", "email"]).default("whatsapp"),
-  }),
-  source: z.enum(["direct_link", "widget"]).default("direct_link"),
-});
+import { createBookingSchema } from "@/lib/validation/booking";
 
 // POST /api/public/:slug/bookings — anonymous booking creation.
 // PUBLIC ROUTE (TRD §9 Layer 3): rate-limited, slug-scoped, records source.

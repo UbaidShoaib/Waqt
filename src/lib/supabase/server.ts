@@ -1,6 +1,6 @@
 // Session-scoped Supabase client for authenticated (owner) routes.
 // Queries run as the logged-in user → RLS applies (TRD §9 Layer 1).
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 export function createClient() {
@@ -12,7 +12,7 @@ export function createClient() {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
+        setAll: ((cookiesToSet) => {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
@@ -20,7 +20,7 @@ export function createClient() {
           } catch {
             // Called from a Server Component — middleware refreshes sessions.
           }
-        },
+        }) satisfies SetAllCookies,
       },
     }
   );

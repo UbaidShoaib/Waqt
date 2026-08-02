@@ -2,9 +2,19 @@
 
 // Shared booking flow — used by both the direct-link page (/b/[slug]) and
 // the iframe embed (/embed/[slug]) so the two paths can't drift (TRD Flows B/C).
-// Steps: pick service → pick slot → contact details → confirm.
+// Steps: pick service → pick date → pick slot → contact details → confirm.
+// The visible step is derived from state rather than tracked separately, so
+// clearing one field (e.g. selectedSlot after a 409) automatically snaps the
+// UI back to the right place.
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { Slot } from "@/lib/slots";
+import { upcomingDates } from "@/lib/dates";
+import { validateContact, type ContactInput } from "@/lib/validation/booking";
+import ServiceList from "@/components/booking/ServiceList";
+import DateStrip from "@/components/booking/DateStrip";
+import SlotGrid from "@/components/booking/SlotGrid";
+import ContactForm from "@/components/booking/ContactForm";
 
 export interface PublicService {
   id: string;
@@ -24,6 +34,18 @@ export interface PublicBusiness {
   welcome_message: string | null;
 }
 
+type SubmitErrorKind = "validation" | "conflict" | "rate_limited" | "generic";
+
+interface BookingResult {
+  id: string;
+  starts_at: string;
+  ends_at: string;
+  status: string;
+  source: string;
+}
+
+const DATE_WINDOW_DAYS = 28;
+
 export default function BookingFlow({
   business,
   services,
@@ -34,12 +56,170 @@ export default function BookingFlow({
   source: "direct_link" | "widget";
 }) {
   const [serviceId, setServiceId] = useState<string | null>(null);
+  const [dateOptions, setDateOptions] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [slotsStatus, setSlotsStatus] = useState<"idle" | "loading" | "loaded" | "error">(
+    "idle"
+  );
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const [customer, setCustomer] = useState<ContactInput>({
+    name: "",
+    phone: "",
+    email: "",
+    preferredChannel: "whatsapp",
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "done" | "error">("idle");
+  const [submitError, setSubmitError] = useState<{ kind: SubmitErrorKind; message: string } | null>(
+    null
+  );
+  const [bookingResult, setBookingResult] = useState<BookingResult | null>(null);
+  const [browserTz, setBrowserTz] = useState<string | null>(null);
 
-  // TODO Week 2: date picker + slot grid backed by
-  // GET /api/public/:slug/slots, then POST /api/public/:slug/bookings.
-  // On success in the embed, notify the host page:
-  //   window.parent.postMessage({ type: "waqt:booking-complete" }, "*")
+  const selectedService = services.find((s) => s.id === serviceId) ?? null;
+
+  // Populate client-only values (Date/Intl) in an effect, not during render,
+  // to avoid a server/client hydration mismatch — see plan notes.
+  useEffect(() => {
+    setDateOptions(upcomingDates(business.timezone, DATE_WINDOW_DAYS));
+    try {
+      setBrowserTz(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    } catch {
+      setBrowserTz(business.timezone);
+    }
+  }, [business.timezone]);
+
+  const refetchSlots = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!serviceId || !selectedDate) return;
+      setSlotsStatus("loading");
+      try {
+        const res = await fetch(
+          `/api/public/${business.slug}/slots?service_id=${serviceId}&date=${selectedDate}`,
+          { signal }
+        );
+        const data = await res.json();
+        if (signal?.aborted) return;
+        setSlots(res.ok ? data.slots ?? [] : []);
+        setSlotsStatus(res.ok ? "loaded" : "error");
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return;
+        setSlotsStatus("error");
+      }
+    },
+    [serviceId, selectedDate, business.slug]
+  );
+
+  useEffect(() => {
+    if (!serviceId || !selectedDate) return;
+    const controller = new AbortController();
+    refetchSlots(controller.signal);
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceId, selectedDate]);
+
+  function handleSelectService(id: string) {
+    setServiceId(id);
+    setSelectedDate(null);
+    setSlots([]);
+    setSelectedSlot(null);
+    setSubmitError(null);
+    setStatus("idle");
+  }
+
+  function handleSelectDate(date: string) {
+    setSelectedDate(date);
+    setSelectedSlot(null);
+    setSlots([]);
+  }
+
+  function handleContactChange(field: keyof ContactInput, value: string) {
+    setCustomer((c) => ({ ...c, [field]: value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!serviceId || !selectedSlot) return;
+
+    const errors = validateContact(customer);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+    setStatus("submitting");
+    setSubmitError(null);
+
+    try {
+      const res = await fetch(`/api/public/${business.slug}/bookings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service_id: serviceId,
+          starts_at: selectedSlot.starts_at,
+          customer: {
+            name: customer.name,
+            phone: customer.phone || undefined,
+            email: customer.email || undefined,
+            preferred_channel: customer.preferredChannel,
+          },
+          source,
+        }),
+      });
+
+      if (res.status === 201) {
+        const body = (await res.json()) as BookingResult;
+        setBookingResult(body);
+        setStatus("done");
+        if (source === "widget") {
+          window.parent.postMessage({ type: "waqt:booking-complete", booking: body }, "*");
+        }
+        return;
+      }
+
+      if (res.status === 409) {
+        setSelectedSlot(null);
+        refetchSlots();
+        setSubmitError({
+          kind: "conflict",
+          message: "That time was just booked by someone else — pick another time below.",
+        });
+        setStatus("idle");
+        return;
+      }
+
+      if (res.status === 429) {
+        setSubmitError({
+          kind: "rate_limited",
+          message: "Too many attempts. Please wait a minute and try again.",
+        });
+        setStatus("idle");
+        return;
+      }
+
+      if (res.status === 400) {
+        const body = await res.json();
+        const message =
+          typeof body.error === "string"
+            ? body.error === "slot is in the past"
+              ? "That time has already passed — please pick another."
+              : body.error
+            : "Please check your details and try again.";
+        setSubmitError({ kind: "validation", message });
+        setStatus("idle");
+        return;
+      }
+
+      setSubmitError({ kind: "generic", message: "Something went wrong. Please try again." });
+      setStatus("idle");
+    } catch {
+      setSubmitError({ kind: "generic", message: "Something went wrong. Please try again." });
+      setStatus("idle");
+    }
+  }
+
+  const showTzNote = browserTz !== null && browserTz !== business.timezone;
 
   return (
     <div className="mx-auto max-w-md space-y-6 p-6">
@@ -60,32 +240,69 @@ export default function BookingFlow({
         </div>
       </header>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium text-slate-500">Choose a service</h2>
-        {services.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setServiceId(s.id)}
-            className={`w-full rounded-lg border p-3 text-left transition ${
-              serviceId === s.id ? "border-brand ring-1 ring-brand" : "border-slate-200"
-            }`}
-          >
-            <span className="font-medium">{s.name}</span>
-            <span className="ml-2 text-sm text-slate-500">
-              {s.duration_min} min ·{" "}
-              {(s.price_cents / 100).toLocaleString(undefined, {
-                style: "currency",
-                currency: business.currency,
-              })}
-            </span>
-          </button>
-        ))}
-      </section>
-
-      {status === "done" && (
+      {status === "done" && bookingResult ? (
         <p className="rounded-lg bg-green-50 p-3 text-green-800">
-          Booking confirmed — you’ll receive a confirmation shortly.
+          Booking confirmed for {selectedService?.name} — you&apos;ll receive a confirmation
+          shortly.
         </p>
+      ) : (
+        <>
+          <ServiceList
+            services={services}
+            business={business}
+            selectedId={serviceId}
+            onSelect={handleSelectService}
+          />
+
+          {serviceId && (
+            <DateStrip
+              timezone={business.timezone}
+              dateOptions={dateOptions}
+              selectedDate={selectedDate}
+              onSelect={handleSelectDate}
+            />
+          )}
+
+          {showTzNote && (
+            <p className="text-xs text-slate-400">
+              Times shown in {business.timezone.replace("_", " ")} time.
+            </p>
+          )}
+
+          {serviceId && selectedDate && (
+            <SlotGrid
+              slots={slots}
+              status={slotsStatus}
+              timezone={business.timezone}
+              selectedSlot={selectedSlot}
+              onSelect={setSelectedSlot}
+              onRetry={() => refetchSlots()}
+            />
+          )}
+
+          {submitError && !selectedSlot && (
+            <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+              {submitError.message}
+            </p>
+          )}
+
+          {selectedSlot && (
+            <>
+              <ContactForm
+                customer={customer}
+                errors={formErrors}
+                submitting={status === "submitting"}
+                onChange={handleContactChange}
+                onSubmit={handleSubmit}
+              />
+              {submitError && (
+                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                  {submitError.message}
+                </p>
+              )}
+            </>
+          )}
+        </>
       )}
 
       <footer className="pt-4 text-center text-xs text-slate-400">
