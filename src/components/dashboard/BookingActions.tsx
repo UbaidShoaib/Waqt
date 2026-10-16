@@ -10,20 +10,23 @@ const destructiveBtn =
 
 type Status = "confirmed" | "cancelled" | "completed" | "no_show";
 type PaymentStatus = "unpaid" | "paid";
-type Action = "cancel" | "complete" | "no_show" | "mark_paid";
+type Action = "cancel" | "complete" | "no_show" | "mark_paid" | "erase";
 
 export default function BookingActions({
   bookingId,
   status,
   paymentStatus,
+  customerId,
 }: {
   bookingId: string;
   status: Status;
   paymentStatus: PaymentStatus;
+  customerId: string;
 }) {
   const router = useRouter();
   const [pendingAction, setPendingAction] = useState<Action | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmingErase, setConfirmingErase] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function patch(body: Record<string, string>, action: Action) {
@@ -46,6 +49,21 @@ export default function BookingActions({
     } catch {
       setError("Couldn't update — try again.");
       setPendingAction(null);
+    }
+  }
+
+  async function eraseCustomer() {
+    setPendingAction("erase");
+    setError(null);
+    try {
+      const res = await fetch(`/api/customers/${customerId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      router.refresh();
+    } catch {
+      setError("Couldn't delete — try again.");
+    } finally {
+      setPendingAction(null);
+      setConfirmingErase(false);
     }
   }
 
@@ -108,6 +126,37 @@ export default function BookingActions({
           className={neutralBtn}
         >
           Mark paid
+        </button>
+      )}
+
+      {confirmingErase ? (
+        <>
+          <span className="text-xs text-slate-600">
+            Permanently delete this customer and all their bookings?
+          </span>
+          <button
+            type="button"
+            disabled={pendingAction === "erase"}
+            onClick={eraseCustomer}
+            className={destructiveBtn}
+          >
+            Delete
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmingErase(false)}
+            className="text-xs text-slate-500 hover:text-slate-700"
+          >
+            Never mind
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirmingErase(true)}
+          className="text-xs text-slate-500 underline hover:text-red-700"
+        >
+          Delete customer data
         </button>
       )}
 

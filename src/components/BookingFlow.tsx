@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Slot } from "@/lib/slots";
-import { upcomingDates } from "@/lib/dates";
+import { formatDateInTimezone, formatDateLabel, formatSlotLabel, upcomingDates } from "@/lib/dates";
 import { validateContact, type ContactInput } from "@/lib/validation/booking";
 import ServiceList from "@/components/booking/ServiceList";
 import DateStrip from "@/components/booking/DateStrip";
@@ -68,6 +68,7 @@ export default function BookingFlow({
     phone: "",
     email: "",
     preferredChannel: "whatsapp",
+    messagingConsent: false,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "done" | "error">("idle");
@@ -134,7 +135,7 @@ export default function BookingFlow({
     setSlots([]);
   }
 
-  function handleContactChange(field: keyof ContactInput, value: string) {
+  function handleContactChange<K extends keyof ContactInput>(field: K, value: ContactInput[K]) {
     setCustomer((c) => ({ ...c, [field]: value }));
   }
 
@@ -163,6 +164,7 @@ export default function BookingFlow({
             phone: customer.phone || undefined,
             email: customer.email || undefined,
             preferred_channel: customer.preferredChannel,
+            messaging_consent: customer.messagingConsent,
           },
           source,
         }),
@@ -241,10 +243,15 @@ export default function BookingFlow({
       </header>
 
       {status === "done" && bookingResult ? (
-        <p className="rounded-lg bg-green-50 p-3 text-green-800">
-          Booking confirmed for {selectedService?.name} — you&apos;ll receive a confirmation
-          shortly.
-        </p>
+        <div role="status" className="space-y-1 rounded-lg bg-green-50 p-3 text-green-800">
+          <p className="font-medium">Booking confirmed</p>
+          <p className="text-sm">
+            {selectedService?.name} ·{" "}
+            {formatDateLabel(formatDateInTimezone(new Date(bookingResult.starts_at), business.timezone), business.timezone)}{" "}
+            at {formatSlotLabel(bookingResult.starts_at, business.timezone)}
+          </p>
+          <p className="text-xs">Please save this time — contact {business.name} directly to change or cancel.</p>
+        </div>
       ) : (
         <>
           <ServiceList
@@ -265,7 +272,7 @@ export default function BookingFlow({
 
           {showTzNote && (
             <p className="text-xs text-slate-400">
-              Times shown in {business.timezone.replace("_", " ")} time.
+              Times shown in {business.timezone.replaceAll("_", " ")} time.
             </p>
           )}
 
@@ -289,6 +296,7 @@ export default function BookingFlow({
           {selectedSlot && (
             <>
               <ContactForm
+                businessName={business.name}
                 customer={customer}
                 errors={formErrors}
                 submitting={status === "submitting"}

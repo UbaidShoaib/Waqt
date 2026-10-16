@@ -6,6 +6,7 @@ const base: ContactInput = {
   phone: "",
   email: "",
   preferredChannel: "whatsapp",
+  messagingConsent: true,
 };
 
 describe("validateContact", () => {
@@ -45,5 +46,21 @@ describe("validateContact", () => {
     expect(
       validateContact({ ...base, phone: "+15551234567", email: "jane@example.com" })
     ).toEqual({});
+  });
+
+  it("requires messaging consent when a phone number is given", () => {
+    const errors = validateContact({ ...base, phone: "+15551234567", messagingConsent: false });
+    expect(errors.consent).toBeDefined();
+  });
+
+  it("does not require consent for email-only bookings", () => {
+    expect(
+      validateContact({ ...base, email: "jane@example.com", messagingConsent: false })
+    ).toEqual({});
+  });
+
+  it("accepts spaced international numbers and rejects local-only ones", () => {
+    expect(validateContact({ ...base, phone: "+92 300 123-4567" })).toEqual({});
+    expect(validateContact({ ...base, phone: "03001234567" }).phone).toBeDefined();
   });
 });

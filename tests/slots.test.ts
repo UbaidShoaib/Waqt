@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeSlots, zonedDayOfWeek, zonedTimeToUtc } from "../src/lib/slots";
+import { computeSlots, zonedDayOfWeek, zonedDayRangeUtc, zonedTimeToUtc } from "../src/lib/slots";
 
 // Unit tests for slot-availability calculation (TRD §15):
 // overlaps + timezone edge cases.
@@ -93,5 +93,13 @@ describe("computeSlots", () => {
       now: past,
     });
     expect(slots).toHaveLength(2);
+  });
+});
+
+describe("zonedDayRangeUtc", () => {
+  it("covers the business-local day, not the UTC day", () => {
+    const { start, end } = zonedDayRangeUtc("2026-07-22", "Asia/Karachi");
+    expect(start.toISOString()).toBe("2026-07-21T19:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-07-22T19:00:00.000Z");
   });
 });

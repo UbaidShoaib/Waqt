@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// POST /api/jobs/send-reminders — Vercel Cron only (TRD §12).
+// GET /api/jobs/send-reminders — Vercel Cron only (TRD §12).
 // Gated by CRON_SECRET so an arbitrary caller can't impersonate the
 // scheduler (TRD §9, "Secrets as the last line of defense").
-export async function POST(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+// Vercel Cron invokes with GET.
+export async function GET(req: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -27,8 +28,9 @@ export async function POST(req: NextRequest) {
 
     const { data: due } = await admin
       .from("bookings")
-      .select("id, starts_at, business_id, customers(name, phone, email, preferred_channel)")
+      .select("id, starts_at, business_id, customers!inner(name, phone, email, preferred_channel, opted_out_at)")
       .eq("status", "confirmed")
+      .is("customers.opted_out_at", null)
       .gte("starts_at", windowStart)
       .lte("starts_at", windowEnd);
 

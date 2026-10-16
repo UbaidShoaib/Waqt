@@ -107,3 +107,21 @@ function tzOffsetMs(at: Date, timezone: string): number {
   );
   return asUtc - at.getTime();
 }
+
+/** Next calendar date after "YYYY-MM-DD" (pure date arithmetic, no tz). */
+export function nextDate(date: string): string {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * UTC [start, end) bounds of a calendar date in `timezone`. Use this, not
+ * `${date}T00:00:00Z`, when querying bookings for a business's local day.
+ */
+export function zonedDayRangeUtc(date: string, timezone: string): { start: Date; end: Date } {
+  return {
+    start: zonedTimeToUtc(date, "00:00:00", timezone),
+    end: zonedTimeToUtc(nextDate(date), "00:00:00", timezone),
+  };
+}

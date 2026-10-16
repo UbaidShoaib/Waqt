@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, getPublicBusinessBySlug } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
-import { createBookingSchema } from "@/lib/validation/booking";
+import { createBookingSchema, CONSENT_TEXT_VERSION } from "@/lib/validation/booking";
+import { getOpenSlots } from "@/lib/availability";
+import { formatDateInTimezone } from "@/lib/dates";
 
 // POST /api/public/:slug/bookings — anonymous booking creation.
 // PUBLIC ROUTE (TRD §9 Layer 3): rate-limited, slug-scoped, records source.
@@ -22,6 +24,9 @@ export async function POST(
   if (!input.customer.phone && !input.customer.email) {
     return NextResponse.json({ error: "phone or email required" }, { status: 400 });
   }
+  if (input.customer.phone && !input.customer.messaging_consent) {
+    return NextResponse.json({ error: "messaging consent required" }, { status: 400 });
+  }
 
   const result = await getPublicBusinessBySlug(params.slug);
   if (!result) return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -40,6 +45,19 @@ export async function POST(
 
   const admin = createAdminClient();
 
+  // Only accept a start time the slots endpoint would actually offer —
+  // otherwise a direct API call could book outside opening hours.
+  const localDate = formatDateInTimezone(startsAt, business.timezone);
+  const open = await getOpenSlots(admin, {
+    businessId: business.id,
+    timezone: business.timezone,
+    durationMin: service.duration_min,
+    date: localDate,
+  });
+  if (!open.some((s) => s.starts_at === startsAt.toISOString())) {
+    return NextResponse.json({ error: "slot unavailable" }, { status: 409 });
+  }
+
   // Upsert customer within this tenant only.
   const { data: customer, error: custError } = await admin
     .from("customers")
@@ -49,6 +67,8 @@ export async function POST(
       phone: input.customer.phone ?? null,
       email: input.customer.email ?? null,
       preferred_channel: input.customer.preferred_channel,
+      messaging_consent_at: input.customer.messaging_consent ? new Date().toISOString() : null,
+      consent_text_version: input.customer.messaging_consent ? CONSENT_TEXT_VERSION : null,
     })
     .select()
     .single();
@@ -71,7 +91,10 @@ export async function POST(
     .single();
 
   if (bookError) {
-    const status = bookError.code === "23505" ? 409 : 500; // slot just taken
+    // 23P01 = exclusion violation (overlapping booking committed concurrently).
+    // The orphan customer row is removed so failed attempts don't accumulate PII.
+    await admin.from("customers").delete().eq("id", customer.id);
+    const status = bookError.code === "23P01" ? 409 : 500;
     return NextResponse.json({ error: "slot unavailable" }, { status });
   }
 
