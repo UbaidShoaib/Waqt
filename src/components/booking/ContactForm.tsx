@@ -1,4 +1,6 @@
 import { consentText, type ContactInput } from "@/lib/validation/booking";
+import Field from "@/components/ui/Field";
+import SectionTitle from "@/components/ui/SectionTitle";
 
 const CHANNELS: { value: ContactInput["preferredChannel"]; label: string }[] = [
   { value: "whatsapp", label: "WhatsApp" },
@@ -6,133 +8,98 @@ const CHANNELS: { value: ContactInput["preferredChannel"]; label: string }[] = [
   { value: "email", label: "Email" },
 ];
 
+export const CONTACT_FORM_ID = "waqt-contact";
+
 export default function ContactForm({
   businessName,
   customer,
   errors,
-  submitting,
   onChange,
   onSubmit,
 }: {
   businessName: string;
   customer: ContactInput;
   errors: Record<string, string>;
-  submitting: boolean;
   onChange: <K extends keyof ContactInput>(field: K, value: ContactInput[K]) => void;
   onSubmit: (e: React.FormEvent) => void;
 }) {
   return (
-    <form onSubmit={onSubmit} className="space-y-3">
-      <h2 className="text-sm font-medium text-slate-500">Your details</h2>
+    <form id={CONTACT_FORM_ID} onSubmit={onSubmit} noValidate className="animate-rise space-y-4">
+      <SectionTitle step={4}>Your details</SectionTitle>
 
-      <div>
-        <label htmlFor="waqt-name" className="mb-1 block text-sm text-slate-700">
-          Full name
-        </label>
-        <input
-          id="waqt-name"
-          type="text" autoComplete="name"
-          aria-invalid={Boolean(errors.name)}
-          aria-describedby={errors.name ? "waqt-name-error" : undefined}
-          value={customer.name}
-          onChange={(e) => onChange("name", e.target.value)}
-          className={`w-full rounded-lg border p-2 outline-none focus:border-brand focus:ring-1 focus:ring-brand ${
-            errors.name ? "border-red-400" : "border-slate-200"
-          }`}
-        />
-        {errors.name && <p id="waqt-name-error" className="mt-1 text-xs text-red-600">{errors.name}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="waqt-phone" className="mb-1 block text-sm text-slate-700">
-          Phone (with country code)
-        </label>
-        <input
-          id="waqt-phone"
-          type="tel" autoComplete="tel"
-          placeholder="+92 300 1234567"
-          aria-invalid={Boolean(errors.phone)}
-          aria-describedby={errors.phone ? "waqt-phone-error" : undefined}
-          value={customer.phone}
-          onChange={(e) => onChange("phone", e.target.value)}
-          className={`w-full rounded-lg border p-2 outline-none focus:border-brand focus:ring-1 focus:ring-brand ${
-            errors.phone ? "border-red-400" : "border-slate-200"
-          }`}
-        />
-        {errors.phone && <p id="waqt-phone-error" className="mt-1 text-xs text-red-600">{errors.phone}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="waqt-email" className="mb-1 block text-sm text-slate-700">
-          Email
-        </label>
-        <input
-          id="waqt-email"
-          type="email" autoComplete="email"
-          placeholder="you@example.com"
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={errors.email ? "waqt-email-error" : undefined}
-          value={customer.email}
-          onChange={(e) => onChange("email", e.target.value)}
-          className={`w-full rounded-lg border p-2 outline-none focus:border-brand focus:ring-1 focus:ring-brand ${
-            errors.email ? "border-red-400" : "border-slate-200"
-          }`}
-        />
-        {errors.email && <p id="waqt-email-error" className="mt-1 text-xs text-red-600">{errors.email}</p>}
-      </div>
-
+      <Field
+        label="Full name"
+        autoComplete="name"
+        value={customer.name}
+        error={errors.name}
+        onChange={(e) => onChange("name", e.target.value)}
+      />
+      <Field
+        label="Phone"
+        type="tel"
+        autoComplete="tel"
+        placeholder="+92 300 1234567"
+        hint="Include your country code."
+        value={customer.phone}
+        error={errors.phone}
+        onChange={(e) => onChange("phone", e.target.value)}
+      />
+      <Field
+        label="Email"
+        type="email"
+        autoComplete="email"
+        placeholder="you@example.com"
+        value={customer.email}
+        error={errors.email}
+        onChange={(e) => onChange("email", e.target.value)}
+      />
       {errors.contact && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs font-medium text-danger">
           {errors.contact}
         </p>
       )}
 
-      <p id="waqt-channel-label" className="text-sm text-slate-700">
-        Send reminders by
-      </p>
-      <div role="group" aria-labelledby="waqt-channel-label" className="flex gap-2">
-        {CHANNELS.map((c) => (
-          <button
-            key={c.value}
-            type="button"
-            aria-pressed={customer.preferredChannel === c.value}
-            onClick={() => onChange("preferredChannel", c.value)}
-            className={`flex-1 rounded-lg border p-2 text-sm transition ${
-              customer.preferredChannel === c.value
-                ? "border-brand ring-1 ring-brand"
-                : "border-slate-200"
-            }`}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+      <fieldset className="space-y-2">
+        <legend className="mb-1.5 text-sm font-semibold">Remind me by</legend>
+        <div className="grid grid-cols-3 gap-2">
+          {CHANNELS.map((c) => {
+            const selected = customer.preferredChannel === c.value;
+            return (
+              <button
+                key={c.value}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => onChange("preferredChannel", c.value)}
+                className={`min-h-11 rounded-pill text-sm transition ${
+                  selected
+                    ? "bg-ink font-semibold text-paper"
+                    : "border border-line bg-paper-raised hover:border-ink-muted"
+                }`}
+              >
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
 
       <div>
-        <label className="flex items-start gap-2 text-xs text-slate-600">
+        <label className="flex items-start gap-3 rounded-card border border-line-soft bg-paper-raised p-3 text-xs leading-relaxed text-ink-muted">
           <input
             type="checkbox"
             checked={customer.messagingConsent}
             onChange={(e) => onChange("messagingConsent", e.target.checked)}
             aria-invalid={Boolean(errors.consent)}
-            className="mt-0.5"
+            className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--ink)]"
           />
           <span>{consentText(businessName)}</span>
         </label>
         {errors.consent && (
-          <p role="alert" className="mt-1 text-xs text-red-600">
+          <p role="alert" className="mt-1.5 text-xs font-medium text-danger">
             {errors.consent}
           </p>
         )}
       </div>
-
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full rounded-lg bg-brand p-3 font-medium text-white transition disabled:opacity-60"
-      >
-        {submitting ? "Booking…" : "Confirm booking"}
-      </button>
     </form>
   );
 }

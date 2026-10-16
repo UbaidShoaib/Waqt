@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPublicBusinessBySlug } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import BookingFlow from "@/components/BookingFlow";
+import { brandStyle } from "@/lib/color";
 
 // Iframe-optimized booking page (TRD Flow C, §11): no chrome, same public
 // data surface as /b/[slug] — must NOT expose anything wider (TRD §9 Layer 3).
@@ -51,7 +52,7 @@ export default async function EmbedPage({
 
   return (
     <main
-      style={{ ["--brand-color" as string]: business.brand_color ?? "#0f172a" }}
+      style={brandStyle(business.brand_color)}
     >
       <BookingFlow business={business} services={services} source="widget" />
       {/* TODO Week 4: height auto-resize — post document height to parent on

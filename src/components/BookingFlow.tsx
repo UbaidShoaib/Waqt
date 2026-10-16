@@ -10,11 +10,14 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Slot } from "@/lib/slots";
 import { formatDateInTimezone, formatDateLabel, formatSlotLabel, upcomingDates } from "@/lib/dates";
+import { buildIcs } from "@/lib/ics";
+import Button from "@/components/ui/Button";
+import Notice from "@/components/ui/Notice";
 import { validateContact, type ContactInput } from "@/lib/validation/booking";
 import ServiceList from "@/components/booking/ServiceList";
 import DateStrip from "@/components/booking/DateStrip";
 import SlotGrid from "@/components/booking/SlotGrid";
-import ContactForm from "@/components/booking/ContactForm";
+import ContactForm, { CONTACT_FORM_ID } from "@/components/booking/ContactForm";
 
 export interface PublicService {
   id: string;
@@ -222,38 +225,16 @@ export default function BookingFlow({
   }
 
   const showTzNote = browserTz !== null && browserTz !== business.timezone;
+  const done = status === "done" && bookingResult !== null;
 
   return (
-    <div className="mx-auto max-w-md space-y-6 p-6">
-      <header className="flex items-center gap-3">
-        {business.logo_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={business.logo_url}
-            alt=""
-            className="h-12 w-12 rounded-full object-cover"
-          />
-        )}
-        <div>
-          <h1 className="text-xl font-semibold">{business.name}</h1>
-          {business.welcome_message && (
-            <p className="text-sm text-slate-600">{business.welcome_message}</p>
-          )}
-        </div>
-      </header>
+    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-paper">
+      <BusinessHeader business={business} />
 
-      {status === "done" && bookingResult ? (
-        <div role="status" className="space-y-1 rounded-lg bg-green-50 p-3 text-green-800">
-          <p className="font-medium">Booking confirmed</p>
-          <p className="text-sm">
-            {selectedService?.name} ·{" "}
-            {formatDateLabel(formatDateInTimezone(new Date(bookingResult.starts_at), business.timezone), business.timezone)}{" "}
-            at {formatSlotLabel(bookingResult.starts_at, business.timezone)}
-          </p>
-          <p className="text-xs">Please save this time — contact {business.name} directly to change or cancel.</p>
-        </div>
+      {done ? (
+        <Confirmation business={business} service={selectedService} booking={bookingResult} />
       ) : (
-        <>
+        <div className="flex flex-1 flex-col gap-7 px-6 pb-32 pt-6">
           <ServiceList
             services={services}
             business={business}
@@ -270,12 +251,6 @@ export default function BookingFlow({
             />
           )}
 
-          {showTzNote && (
-            <p className="text-xs text-slate-400">
-              Times shown in {business.timezone.replaceAll("_", " ")} time.
-            </p>
-          )}
-
           {serviceId && selectedDate && (
             <SlotGrid
               slots={slots}
@@ -287,11 +262,13 @@ export default function BookingFlow({
             />
           )}
 
-          {submitError && !selectedSlot && (
-            <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-              {submitError.message}
+          {showTzNote && serviceId && (
+            <p className="-mt-4 text-xs text-ink-muted">
+              Times shown in {business.timezone.replaceAll("_", " ")} time.
             </p>
           )}
+
+          {submitError && !selectedSlot && <Notice>{submitError.message}</Notice>}
 
           {selectedSlot && (
             <>
@@ -299,23 +276,129 @@ export default function BookingFlow({
                 businessName={business.name}
                 customer={customer}
                 errors={formErrors}
-                submitting={status === "submitting"}
                 onChange={handleContactChange}
                 onSubmit={handleSubmit}
               />
-              {submitError && (
-                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-                  {submitError.message}
-                </p>
-              )}
+              {submitError && <Notice>{submitError.message}</Notice>}
             </>
           )}
-        </>
+
+          <p className="mt-auto pt-4 text-center text-xs text-ink-muted">
+            Booking by <span className="font-display font-semibold text-ink">Waqt</span>
+          </p>
+        </div>
       )}
 
-      <footer className="pt-4 text-center text-xs text-slate-400">
-        Powered by Waqt
-      </footer>
+      {!done && selectedService && selectedSlot && (
+        <div className="sticky bottom-0 z-10 flex items-center justify-between gap-3 border-t border-line-soft bg-paper/95 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3.5 backdrop-blur">
+          <div className="min-w-0">
+            <p className="truncate text-[13px] text-ink-muted">
+              {formatDateLabel(selectedDate!, business.timezone)} · {formatSlotLabel(selectedSlot.starts_at, business.timezone)}
+            </p>
+            <p className="truncate font-bold">{selectedService.name}</p>
+          </div>
+          <Button type="submit" form={CONTACT_FORM_ID} size="lg" disabled={status === "submitting"}>
+            {status === "submitting" ? "Booking…" : "Confirm"}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BusinessHeader({ business }: { business: PublicBusiness }) {
+  return (
+    <header className="relative overflow-hidden bg-ink px-6 pb-6 pt-7 text-paper">
+      <ClockMark />
+      <div className="relative flex items-center gap-3">
+        {business.logo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={business.logo_url} alt="" className="h-12 w-12 rounded-full bg-paper object-cover" />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-brand font-display text-[22px] font-semibold text-brand-fg"
+          >
+            {business.name.trim().charAt(0).toUpperCase()}
+          </span>
+        )}
+        <h1 className="font-display text-[26px] font-semibold leading-tight">{business.name}</h1>
+      </div>
+      {business.welcome_message && (
+        <p className="relative mt-3.5 text-sm leading-relaxed text-ink-soft">{business.welcome_message}</p>
+      )}
+    </header>
+  );
+}
+
+/** Waqt's signature mark — a clock face, tinted with the tenant's brand. */
+function ClockMark() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 150 150"
+      className="pointer-events-none absolute -right-9 -top-8 h-[150px] w-[150px] text-brand opacity-20"
+    >
+      <circle cx="75" cy="75" r="60" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle cx="75" cy="75" r="42" fill="none" stroke="currentColor" strokeWidth="1" />
+      <line x1="75" y1="75" x2="75" y2="30" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <line x1="75" y1="75" x2="106" y2="88" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Confirmation({
+  business,
+  service,
+  booking,
+}: {
+  business: PublicBusiness;
+  service: PublicService | null;
+  booking: BookingResult;
+}) {
+  const date = formatDateLabel(formatDateInTimezone(new Date(booking.starts_at), business.timezone), business.timezone);
+  const time = formatSlotLabel(booking.starts_at, business.timezone);
+  const title = `${service?.name ?? "Appointment"} at ${business.name}`;
+
+  function addToCalendar() {
+    const ics = buildIcs({ uid: booking.id, startsAt: booking.starts_at, endsAt: booking.ends_at, title });
+    const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "booking.ics";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div role="status" className="flex flex-1 animate-rise flex-col items-center gap-5 px-6 py-10 text-center">
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-brand-fg">
+        <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      </span>
+      <div className="space-y-1">
+        <h2 className="font-display text-[28px] font-semibold">You&apos;re booked</h2>
+        <p className="text-ink-muted">See you soon at {business.name}.</p>
+      </div>
+      <dl className="w-full divide-y divide-line-soft rounded-card border border-line bg-paper-raised text-left text-sm">
+        <div className="flex justify-between gap-4 p-4">
+          <dt className="text-ink-muted">Service</dt>
+          <dd className="font-semibold">{service?.name}</dd>
+        </div>
+        <div className="flex justify-between gap-4 p-4">
+          <dt className="text-ink-muted">When</dt>
+          <dd className="font-semibold">
+            {date} · {time}
+          </dd>
+        </div>
+      </dl>
+      <Button variant="primary" size="lg" className="w-full" onClick={addToCalendar}>
+        Add to my calendar
+      </Button>
+      <p className="text-xs text-ink-muted">
+        Need to change or cancel? Contact {business.name} directly.
+      </p>
     </div>
   );
 }

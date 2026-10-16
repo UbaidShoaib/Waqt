@@ -2,8 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Direction A — "Saffron Hour": deep ink green on warm paper, saffron accent.
+   All text/ground pairs below meet WCAG AA (4.5:1). */
 :root {
-  /* Overridden per tenant via inline style on the booking/embed page
-     (TRD §10: server-injected CSS custom properties). */
-  --brand-color: #0f172a;
+  --ink: #12332b;
+  --ink-muted: #4f6660;
+  --ink-soft: #d9e3df;
+  --paper: #fbfaf7;
+  --paper-raised: #ffffff;
+  --line: #dcd6ca;
+  --line-soft: #e7e1d5;
+  --saffron: #e59a1e;
+  --danger: #a3271a;
+  --danger-soft: #fbeae7;
+  --success: #1d6b47;
+  --success-soft: #e6f3ec;
+  --notice: #7a4b06;
+  --notice-soft: #fcf1dc;
+
+  /* Overridden per tenant via inline style (TRD §10). */
+  --brand-color: var(--saffron);
+  --brand-fg: var(--ink);
+}
+
+@layer base {
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 }

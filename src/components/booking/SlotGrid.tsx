@@ -1,5 +1,9 @@
 import type { Slot } from "@/lib/slots";
-import { formatSlotLabel } from "@/lib/dates";
+import { dayPeriod, formatSlotLabel, type DayPeriod } from "@/lib/dates";
+import SectionTitle from "@/components/ui/SectionTitle";
+import Notice from "@/components/ui/Notice";
+
+const PERIODS: DayPeriod[] = ["Morning", "Afternoon", "Evening"];
 
 export default function SlotGrid({
   slots,
@@ -16,51 +20,64 @@ export default function SlotGrid({
   onSelect: (slot: Slot) => void;
   onRetry: () => void;
 }) {
+  const grouped = PERIODS.map((period) => ({
+    period,
+    slots: slots.filter((s) => dayPeriod(s.starts_at, timezone) === period),
+  })).filter((g) => g.slots.length > 0);
+
   return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-medium text-slate-500">Choose a time</h2>
+    <section className="animate-rise space-y-2.5">
+      <SectionTitle step={3}>Time</SectionTitle>
 
       {status === "loading" && (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2" aria-busy="true" aria-label="Loading times">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
+            <div key={i} className="h-11 animate-pulse rounded-xl bg-line-soft" />
           ))}
         </div>
       )}
 
       {status === "error" && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">
+        <Notice tone="danger">
           Couldn&apos;t load available times.{" "}
-          <button type="button" onClick={onRetry} className="underline">
+          <button type="button" onClick={onRetry} className="font-semibold underline">
             Try again
           </button>
-        </div>
+        </Notice>
       )}
 
       {status === "loaded" && slots.length === 0 && (
-        <p className="text-sm text-slate-500">
-          No times available on this date — try another day.
+        <p className="rounded-card border border-dashed border-line p-4 text-center text-sm text-ink-muted">
+          Fully booked on this day — try another.
         </p>
       )}
 
-      {status === "loaded" && slots.length > 0 && (
-        <div className="grid grid-cols-3 gap-2">
-          {slots.map((slot) => (
-            <button
-              key={slot.starts_at}
-              type="button"
-              onClick={() => onSelect(slot)}
-              className={`rounded-lg border p-2 text-center text-sm transition ${
-                selectedSlot?.starts_at === slot.starts_at
-                  ? "border-brand ring-1 ring-brand"
-                  : "border-slate-200"
-              }`}
-            >
-              {formatSlotLabel(slot.starts_at, timezone)}
-            </button>
-          ))}
-        </div>
-      )}
+      {status === "loaded" &&
+        grouped.map((g) => (
+          <div key={g.period} className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-ink-muted">{g.period}</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {g.slots.map((slot) => {
+                const selected = selectedSlot?.starts_at === slot.starts_at;
+                return (
+                  <button
+                    key={slot.starts_at}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => onSelect(slot)}
+                    className={`min-h-11 rounded-xl text-center text-sm transition ${
+                      selected
+                        ? "bg-brand font-bold text-brand-fg"
+                        : "border border-line bg-paper-raised font-semibold hover:border-ink-muted"
+                    }`}
+                  >
+                    {formatSlotLabel(slot.starts_at, timezone)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
     </section>
   );
 }

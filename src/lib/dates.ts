@@ -50,3 +50,23 @@ export function formatSlotLabel(isoUtc: string, timezone: string): string {
     minute: "2-digit",
   }).format(new Date(isoUtc));
 }
+
+/** { weekday: "Sat", day: "18", month: "Oct" } for a date in a timezone. */
+export function formatDateParts(dateStr: string, timezone: string) {
+  const probe = new Date(`${dateStr}T12:00:00Z`);
+  const part = (opts: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat("en-US", { timeZone: timezone, ...opts }).format(probe);
+  return { weekday: part({ weekday: "short" }), day: part({ day: "numeric" }), month: part({ month: "short" }) };
+}
+
+export type DayPeriod = "Morning" | "Afternoon" | "Evening";
+
+/** Which part of the day (in `timezone`) a slot starts in. */
+export function dayPeriod(isoUtc: string, timezone: string): DayPeriod {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "numeric", hourCycle: "h23" }).format(
+      new Date(isoUtc)
+    )
+  );
+  return hour < 12 ? "Morning" : hour < 17 ? "Afternoon" : "Evening";
+}
