@@ -7,7 +7,7 @@ export default async function BrandingPage() {
 
   return (
     <>
-      <h2 className="text-lg font-medium">Branding</h2>
+      <h2 className="font-display text-2xl font-semibold">Branding</h2>
       <BrandingForm
         businessId={business.id}
         initialLogoUrl={business.logo_url}

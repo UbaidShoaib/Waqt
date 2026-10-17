@@ -76,9 +76,9 @@ export default function OnboardingForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="w-full rounded-lg border border-slate-200 p-2 outline-none focus:border-slate-400"
+          className="w-full min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
-        {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+        {errors.name && <p className="mt-1 text-xs text-danger">{errors.name}</p>}
       </div>
 
       <div>
@@ -88,9 +88,9 @@ export default function OnboardingForm() {
           value={slug}
           onChange={(e) => setSlug(e.target.value.toLowerCase())}
           required
-          className="w-full rounded-lg border border-slate-200 p-2 outline-none focus:border-slate-400"
+          className="w-full min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
-        {errors.slug && <p className="mt-1 text-xs text-red-600">{errors.slug}</p>}
+        {errors.slug && <p className="mt-1 text-xs text-danger">{errors.slug}</p>}
       </div>
 
       <div>
@@ -100,9 +100,9 @@ export default function OnboardingForm() {
           value={timezone}
           onChange={(e) => setTimezone(e.target.value)}
           required
-          className="w-full rounded-lg border border-slate-200 p-2 outline-none focus:border-slate-400"
+          className="w-full min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
-        {errors.timezone && <p className="mt-1 text-xs text-red-600">{errors.timezone}</p>}
+        {errors.timezone && <p className="mt-1 text-xs text-danger">{errors.timezone}</p>}
       </div>
 
       <div>
@@ -113,17 +113,17 @@ export default function OnboardingForm() {
           onChange={(e) => setCurrency(e.target.value.toUpperCase())}
           maxLength={3}
           required
-          className="w-full rounded-lg border border-slate-200 p-2 outline-none focus:border-slate-400"
+          className="w-full min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
-        {errors.currency && <p className="mt-1 text-xs text-red-600">{errors.currency}</p>}
+        {errors.currency && <p className="mt-1 text-xs text-danger">{errors.currency}</p>}
       </div>
 
-      {errors.general && <p className="text-sm text-red-600">{errors.general}</p>}
+      {errors.general && <p className="text-sm text-danger">{errors.general}</p>}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg bg-slate-900 p-3 font-medium text-white transition disabled:opacity-60"
+        className="w-full inline-flex min-h-12 items-center justify-center rounded-pill bg-ink px-5 text-sm font-semibold text-paper transition hover:bg-ink/90 disabled:opacity-60"
       >
         {loading ? "Creating…" : "Create business"}
       </button>

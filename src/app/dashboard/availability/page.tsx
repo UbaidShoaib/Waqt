@@ -12,7 +12,7 @@ export default async function AvailabilityPage() {
 
   return (
     <>
-      <h2 className="text-lg font-medium">Weekly availability</h2>
+      <h2 className="font-display text-2xl font-semibold">Weekly availability</h2>
       <AvailabilityForm initialRules={rules ?? []} />
     </>
   );

@@ -51,23 +51,23 @@ export default function AddDomainForm({ businessId }: { businessId: string }) {
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-2">
       <div>
-        <label className="mb-1 block text-xs text-slate-600">Domain</label>
+        <label className="mb-1 block text-xs font-semibold text-ink">Domain</label>
         <input
           type="text"
           placeholder="example.com"
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
-          className="rounded-lg border border-slate-200 p-2 text-sm outline-none focus:border-slate-400"
+          className="min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
       </div>
       <button
         type="submit"
         disabled={loading}
-        className="rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 text-sm font-semibold text-paper transition hover:bg-ink/90 disabled:opacity-60"
       >
         {loading ? "Adding…" : "Add domain"}
       </button>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </form>
   );
 }

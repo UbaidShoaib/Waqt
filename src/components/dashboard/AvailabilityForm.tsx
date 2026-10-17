@@ -90,7 +90,7 @@ export default function AvailabilityForm({ initialRules }: { initialRules: Rule[
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-ink-muted">
         Saving replaces your entire weekly schedule.
       </p>
       <div className="space-y-2">
@@ -109,27 +109,27 @@ export default function AvailabilityForm({ initialRules }: { initialRules: Rule[
               value={day.start}
               disabled={!day.open}
               onChange={(e) => updateDay(i, { start: e.target.value })}
-              className="rounded-lg border border-slate-200 p-2 outline-none focus:border-slate-400 disabled:opacity-50"
+              className="min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink disabled:opacity-50"
             />
-            <span className="text-slate-400">to</span>
+            <span className="text-ink-muted">to</span>
             <input
               type="time"
               value={day.end}
               disabled={!day.open}
               onChange={(e) => updateDay(i, { end: e.target.value })}
-              className="rounded-lg border border-slate-200 p-2 outline-none focus:border-slate-400 disabled:opacity-50"
+              className="min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink disabled:opacity-50"
             />
           </div>
         ))}
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {saved && <p className="text-sm text-green-700">Saved.</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {saved && <p className="text-sm text-success">Saved.</p>}
 
       <button
         type="submit"
         disabled={loading}
-        className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-white transition disabled:opacity-60"
+        className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 text-sm font-semibold text-paper transition hover:bg-ink/90 disabled:opacity-60"
       >
         {loading ? "Saving…" : "Save schedule"}
       </button>

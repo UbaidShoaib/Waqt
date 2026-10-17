@@ -41,7 +41,7 @@ export default async function EmbedPage({
     if (!isOwnerPreview) {
       return (
         <main className="flex min-h-screen items-center justify-center p-6 text-center">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-ink-muted">
             This booking widget isn’t authorized on this website. If you own
             this business, add this domain in your Waqt dashboard under Embed.
           </p>

@@ -40,11 +40,11 @@ export default function DomainRowActions({
         type="button"
         disabled={loading}
         onClick={handleRemove}
-        className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-60"
+        className="min-h-9 rounded-pill border border-danger/40 bg-paper-raised px-3.5 text-xs font-semibold text-danger transition hover:bg-danger-soft disabled:opacity-60"
       >
         Remove
       </button>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }

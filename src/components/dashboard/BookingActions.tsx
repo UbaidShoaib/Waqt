@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const neutralBtn =
-  "rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60";
+  "min-h-9 rounded-pill border border-line bg-paper-raised px-3.5 text-xs font-semibold text-ink transition hover:border-ink disabled:opacity-60";
 const destructiveBtn =
-  "rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-60";
+  "min-h-9 rounded-pill border border-danger/40 bg-paper-raised px-3.5 text-xs font-semibold text-danger transition hover:bg-danger-soft disabled:opacity-60";
 
 type Status = "confirmed" | "cancelled" | "completed" | "no_show";
 type PaymentStatus = "unpaid" | "paid";
@@ -71,7 +71,7 @@ export default function BookingActions({
     <div className="flex flex-wrap items-center gap-2">
       {confirmingCancel ? (
         <>
-          <span className="text-xs text-slate-600">Cancel this booking?</span>
+          <span className="text-xs text-ink-muted">Cancel this booking?</span>
           <button
             type="button"
             disabled={pendingAction === "cancel"}
@@ -83,7 +83,7 @@ export default function BookingActions({
           <button
             type="button"
             onClick={() => setConfirmingCancel(false)}
-            className="text-xs text-slate-500 hover:text-slate-700"
+            className="text-xs text-ink-muted hover:text-ink"
           >
             Never mind
           </button>
@@ -131,7 +131,7 @@ export default function BookingActions({
 
       {confirmingErase ? (
         <>
-          <span className="text-xs text-slate-600">
+          <span className="text-xs text-ink-muted">
             Permanently delete this customer and all their bookings?
           </span>
           <button
@@ -145,7 +145,7 @@ export default function BookingActions({
           <button
             type="button"
             onClick={() => setConfirmingErase(false)}
-            className="text-xs text-slate-500 hover:text-slate-700"
+            className="text-xs text-ink-muted hover:text-ink"
           >
             Never mind
           </button>
@@ -154,13 +154,13 @@ export default function BookingActions({
         <button
           type="button"
           onClick={() => setConfirmingErase(true)}
-          className="text-xs text-slate-500 underline hover:text-red-700"
+          className="text-xs text-ink-muted underline hover:text-danger"
         >
           Delete customer data
         </button>
       )}
 
-      {error && <p className="w-full text-xs text-red-600">{error}</p>}
+      {error && <p className="w-full text-xs text-danger">{error}</p>}
     </div>
   );
 }

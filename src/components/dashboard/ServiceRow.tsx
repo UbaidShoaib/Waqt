@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { centsToDollars, dollarsToCents } from "@/lib/money";
+import { centsToDollars, dollarsToCents, formatMoney } from "@/lib/money";
+import { formatDuration } from "@/components/booking/ServiceList";
 
 interface Service {
   id: string;
@@ -13,9 +14,9 @@ interface Service {
 }
 
 const neutralBtn =
-  "rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60";
+  "min-h-9 rounded-pill border border-line bg-paper-raised px-3.5 text-xs font-semibold text-ink transition hover:border-ink disabled:opacity-60";
 const solidBtn =
-  "rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-slate-800 disabled:opacity-60";
+  "min-h-9 rounded-pill bg-ink px-3.5 text-xs font-semibold text-paper transition hover:bg-ink/90 disabled:opacity-60";
 
 export default function ServiceRow({
   service,
@@ -86,20 +87,20 @@ export default function ServiceRow({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="rounded-lg border border-slate-200 p-2 text-sm outline-none focus:border-slate-400"
+          className="min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
         <input
           type="number"
           value={durationMin}
           onChange={(e) => setDurationMin(e.target.value)}
-          className="w-24 rounded-lg border border-slate-200 p-2 text-sm outline-none focus:border-slate-400"
+          className="w-24 min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
         <input
           type="number"
           step="0.01"
           value={priceDollars}
           onChange={(e) => setPriceDollars(e.target.value)}
-          className="w-24 rounded-lg border border-slate-200 p-2 text-sm outline-none focus:border-slate-400"
+          className="w-24 min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
         <button type="button" disabled={loading} onClick={handleSave} className={solidBtn}>
           Save
@@ -107,11 +108,11 @@ export default function ServiceRow({
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="text-xs text-slate-500 hover:text-slate-700"
+          className="text-xs text-ink-muted hover:text-ink"
         >
           Cancel
         </button>
-        {error && <p className="w-full text-xs text-red-600">{error}</p>}
+        {error && <p className="w-full text-xs text-danger">{error}</p>}
       </div>
     );
   }
@@ -120,12 +121,8 @@ export default function ServiceRow({
     <div className="flex items-center justify-between">
       <div>
         <span className="font-medium">{service.name}</span>
-        <span className="ml-2 text-slate-500">
-          {service.duration_min} min ·{" "}
-          {centsToDollars(service.price_cents).toLocaleString(undefined, {
-            style: "currency",
-            currency,
-          })}
+        <span className="ml-2 text-ink-muted">
+          {formatDuration(service.duration_min)} · {formatMoney(service.price_cents, currency)}
           {!service.is_active && " · inactive"}
         </span>
       </div>
@@ -142,7 +139,7 @@ export default function ServiceRow({
           {service.is_active ? "Deactivate" : "Activate"}
         </button>
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }

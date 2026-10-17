@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { dollarsToCents } from "@/lib/money";
 
-export default function AddServiceForm() {
+export default function AddServiceForm({ currency }: { currency: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [durationMin, setDurationMin] = useState("");
@@ -79,48 +79,48 @@ export default function AddServiceForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2">
       <div>
-        <label className="mb-1 block text-xs text-slate-600">Name</label>
+        <label className="mb-1 block text-xs font-semibold text-ink">Name</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="rounded-lg border border-slate-200 p-2 text-sm outline-none focus:border-slate-400"
+          className="min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
-        {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+        {errors.name && <p className="mt-1 text-xs text-danger">{errors.name}</p>}
       </div>
       <div>
-        <label className="mb-1 block text-xs text-slate-600">Duration (min)</label>
+        <label className="mb-1 block text-xs font-semibold text-ink">Duration (min)</label>
         <input
           type="number"
           value={durationMin}
           onChange={(e) => setDurationMin(e.target.value)}
-          className="w-24 rounded-lg border border-slate-200 p-2 text-sm outline-none focus:border-slate-400"
+          className="w-24 min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
         {errors.duration_min && (
-          <p className="mt-1 text-xs text-red-600">{errors.duration_min}</p>
+          <p className="mt-1 text-xs text-danger">{errors.duration_min}</p>
         )}
       </div>
       <div>
-        <label className="mb-1 block text-xs text-slate-600">Price ($)</label>
+        <label className="mb-1 block text-xs font-semibold text-ink">Price ({currency})</label>
         <input
           type="number"
           step="0.01"
           value={priceDollars}
           onChange={(e) => setPriceDollars(e.target.value)}
-          className="w-24 rounded-lg border border-slate-200 p-2 text-sm outline-none focus:border-slate-400"
+          className="w-24 min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
         {errors.price_cents && (
-          <p className="mt-1 text-xs text-red-600">{errors.price_cents}</p>
+          <p className="mt-1 text-xs text-danger">{errors.price_cents}</p>
         )}
       </div>
       <button
         type="submit"
         disabled={loading}
-        className="rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 text-sm font-semibold text-paper transition hover:bg-ink/90 disabled:opacity-60"
       >
         {loading ? "Adding…" : "Add service"}
       </button>
-      {errors.general && <p className="w-full text-xs text-red-600">{errors.general}</p>}
+      {errors.general && <p className="w-full text-xs text-danger">{errors.general}</p>}
     </form>
   );
 }

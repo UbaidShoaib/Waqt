@@ -14,16 +14,16 @@ export default async function ServicesPage() {
 
   return (
     <>
-      <h2 className="text-lg font-medium">Services</h2>
-      <AddServiceForm />
-      <ul className="divide-y rounded-lg border">
+      <h2 className="font-display text-2xl font-semibold">Services</h2>
+      <AddServiceForm currency={business.currency} />
+      <ul className="divide-y divide-line-soft rounded-card border border-line bg-paper-raised">
         {(services ?? []).map((s) => (
           <li key={s.id} className="p-3 text-sm">
             <ServiceRow service={s} currency={business.currency} />
           </li>
         ))}
         {(services ?? []).length === 0 && (
-          <li className="p-3 text-sm text-slate-500">No services yet.</li>
+          <li className="p-3 text-sm text-ink-muted">No services yet.</li>
         )}
       </ul>
     </>

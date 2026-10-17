@@ -71,24 +71,24 @@ export default function BrandingForm({
   return (
     <form onSubmit={handleSubmit} className="max-w-sm space-y-3">
       <div>
-        <label className="mb-1 block text-sm text-slate-600">Logo URL</label>
+        <label className="mb-1 block text-sm font-semibold text-ink">Logo URL</label>
         <input
           type="url"
           placeholder="https://example.com/logo.png"
           value={logoUrl}
           onChange={(e) => setLogoUrl(e.target.value)}
-          className="w-full rounded-lg border border-slate-200 p-2 outline-none focus:border-slate-400"
+          className="w-full min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
-        {errors.logo_url && <p className="mt-1 text-xs text-red-600">{errors.logo_url}</p>}
+        {errors.logo_url && <p className="mt-1 text-xs text-danger">{errors.logo_url}</p>}
       </div>
 
       <div>
-        <label className="mb-1 block text-sm text-slate-600">Brand color</label>
+        <label className="mb-1 block text-sm font-semibold text-ink">Brand color</label>
         {useDefaultColor ? (
           <button
             type="button"
             onClick={() => setUseDefaultColor(false)}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+            className="min-h-9 rounded-pill border border-line bg-paper-raised px-3.5 text-xs font-semibold text-ink transition hover:border-ink"
           >
             Set custom color
           </button>
@@ -98,44 +98,44 @@ export default function BrandingForm({
               type="color"
               value={brandColor}
               onChange={(e) => setBrandColor(e.target.value)}
-              className="h-9 w-14 rounded border border-slate-200"
+              className="h-11 w-14 rounded-card border border-line"
             />
             <button
               type="button"
               onClick={() => setUseDefaultColor(true)}
-              className="text-xs text-slate-500 hover:text-slate-700"
+              className="text-xs text-ink-muted hover:text-ink"
             >
               Use default
             </button>
           </div>
         )}
         {errors.brand_color && (
-          <p className="mt-1 text-xs text-red-600">{errors.brand_color}</p>
+          <p className="mt-1 text-xs text-danger">{errors.brand_color}</p>
         )}
       </div>
 
       <div>
-        <label className="mb-1 block text-sm text-slate-600">Welcome message</label>
+        <label className="mb-1 block text-sm font-semibold text-ink">Welcome message</label>
         <textarea
           value={welcomeMessage}
           onChange={(e) => setWelcomeMessage(e.target.value)}
           maxLength={280}
           rows={3}
-          className="w-full rounded-lg border border-slate-200 p-2 outline-none focus:border-slate-400"
+          className="w-full min-h-11 rounded-card border border-line bg-paper-raised px-3 text-sm text-ink outline-none transition focus:border-ink focus:ring-1 focus:ring-ink"
         />
-        <p className="mt-1 text-xs text-slate-400">{welcomeMessage.length}/280</p>
+        <p className="mt-1 text-xs text-ink-muted">{welcomeMessage.length}/280</p>
         {errors.welcome_message && (
-          <p className="mt-1 text-xs text-red-600">{errors.welcome_message}</p>
+          <p className="mt-1 text-xs text-danger">{errors.welcome_message}</p>
         )}
       </div>
 
-      {errors.general && <p className="text-sm text-red-600">{errors.general}</p>}
-      {saved && <p className="text-sm text-green-700">Saved.</p>}
+      {errors.general && <p className="text-sm text-danger">{errors.general}</p>}
+      {saved && <p className="text-sm text-success">Saved.</p>}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg bg-slate-900 p-3 font-medium text-white transition disabled:opacity-60"
+        className="w-full inline-flex min-h-12 items-center justify-center rounded-pill bg-ink px-5 text-sm font-semibold text-paper transition hover:bg-ink/90 disabled:opacity-60"
       >
         {loading ? "Saving…" : "Save"}
       </button>

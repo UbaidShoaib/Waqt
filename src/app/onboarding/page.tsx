@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getOwnedBusiness } from "@/lib/supabase/server";
 import OnboardingForm from "@/components/auth/OnboardingForm";
+import AuthShell from "@/components/auth/AuthShell";
 
 export default async function OnboardingPage() {
   const { user, business } = await getOwnedBusiness();
@@ -8,9 +9,8 @@ export default async function OnboardingPage() {
   if (business) redirect("/dashboard");
 
   return (
-    <main className="mx-auto max-w-sm space-y-6 p-6">
-      <h1 className="text-xl font-semibold">Set up your business</h1>
+    <AuthShell title="Set up your business" subtitle="This is what customers will see on your booking page.">
       <OnboardingForm />
-    </main>
+    </AuthShell>
   );
 }

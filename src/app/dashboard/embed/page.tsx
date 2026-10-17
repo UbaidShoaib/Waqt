@@ -21,15 +21,15 @@ export default async function EmbedSettingsPage() {
 
   return (
     <>
-      <h2 className="text-lg font-medium">Embed your booking widget</h2>
+      <h2 className="font-display text-2xl font-semibold">Embed your booking widget</h2>
 
       <section className="space-y-2">
         <h2 className="font-medium">1. Allowed domains</h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-ink-muted">
           The widget only renders on domains you list here. Add www and the
           bare domain separately.
         </p>
-        <ul className="divide-y rounded-lg border">
+        <ul className="divide-y divide-line-soft rounded-card border border-line bg-paper-raised">
           {(domains ?? []).map((d) => (
             <li key={d.id} className="flex items-center justify-between p-3 text-sm">
               <span>{d.domain}</span>
@@ -47,7 +47,7 @@ export default async function EmbedSettingsPage() {
 
       <section className="space-y-2">
         <h2 className="font-medium">2. Copy this snippet into your site</h2>
-        <pre className="overflow-x-auto rounded-lg bg-slate-900 p-4 text-sm text-slate-100">
+        <pre className="overflow-x-auto rounded-card bg-ink p-4 text-sm text-paper">
           {snippet}
         </pre>
       </section>
