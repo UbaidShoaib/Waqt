@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyBooking } from "@/lib/messaging/notify";
 
-// GET /api/jobs/send-reminders — Vercel Cron only (TRD §12).
+// GET /api/jobs/send-reminders — called every 15 min by the GitHub Actions
+// workflow (.github/workflows/send-reminders.yml); TRD §12.
 // Gated by CRON_SECRET so an arbitrary caller can't impersonate the
 // scheduler (TRD §9, "Secrets as the last line of defense").
-// Vercel Cron invokes with GET.
+// Invoked with GET (curl in the workflow; also what Vercel Cron would use).
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {

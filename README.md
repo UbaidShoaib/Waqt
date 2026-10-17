@@ -8,7 +8,7 @@ is the source of truth; this README is orientation only.
 ## Stack
 
 Next.js 14 (App Router, TypeScript) · Supabase (Postgres + Auth + Storage,
-RLS) · Tailwind · Vercel (hosting + cron) · WhatsApp Cloud API / Twilio /
+RLS) · Tailwind · Vercel (hosting) · GitHub Actions (15-min reminder trigger) · WhatsApp Cloud API / Twilio /
 Resend for messaging.
 
 ## Layout
