@@ -3,6 +3,7 @@ import { createAdminClient, getPublicBusinessBySlug } from "@/lib/supabase/admin
 import { rateLimit } from "@/lib/rate-limit";
 import { createBookingSchema, CONSENT_TEXT_VERSION } from "@/lib/validation/booking";
 import { getOpenSlots } from "@/lib/availability";
+import { notifyBooking } from "@/lib/messaging/notify";
 import { formatDateInTimezone } from "@/lib/dates";
 
 // POST /api/public/:slug/bookings — anonymous booking creation.
@@ -98,7 +99,7 @@ export async function POST(
     return NextResponse.json({ error: "slot unavailable" }, { status });
   }
 
-  // TODO Week 3: send confirmation via lib/messaging/send.ts + log it.
+  await notifyBooking(booking.id, "confirmation");
 
   return NextResponse.json(booking, { status: 201 });
 }

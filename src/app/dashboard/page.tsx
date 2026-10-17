@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getOwnedBusiness } from "@/lib/supabase/server";
 import BookingActions from "@/components/dashboard/BookingActions";
 import { formatDateInTimezone, formatDateLabel, formatSlotLabel } from "@/lib/dates";
+import { manualReminderText, whatsappLink } from "@/lib/messaging/templates";
 
 type Status = "confirmed" | "cancelled" | "completed" | "no_show";
 
@@ -144,7 +145,29 @@ export default async function DashboardPage() {
                       {b.services?.name}
                       {contact && <> · {contact}</>} · {b.source === "widget" ? "Website widget" : "Booking link"}
                     </p>
-                    <div className="pt-2">
+                    <div className="flex flex-wrap items-center gap-2 pt-2">
+                      {b.status === "confirmed" && b.customers?.phone && (
+                        <a
+                          href={whatsappLink(
+                            b.customers.phone,
+                            manualReminderText({
+                              businessName: business.name,
+                              timezone: tz,
+                              serviceName: b.services?.name ?? "appointment",
+                              customerName: b.customers.name,
+                              startsAt: b.starts_at,
+                            })
+                          )}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex min-h-9 items-center gap-1.5 rounded-pill bg-success px-3.5 text-xs font-semibold text-paper transition hover:brightness-110"
+                        >
+                          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                          </svg>
+                          Remind on WhatsApp
+                        </a>
+                      )}
                       <BookingActions
                         bookingId={b.id}
                         status={b.status}

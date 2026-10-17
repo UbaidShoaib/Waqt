@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyBooking } from "@/lib/messaging/notify";
 
 // GET /api/jobs/send-reminders — Vercel Cron only (TRD §12).
 // Gated by CRON_SECRET so an arbitrary caller can't impersonate the
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     { type: "reminder_1h" as const, msBefore: 60 * 60_000 },
   ];
 
-  let queued = 0;
+  let sent = 0;
   for (const w of windows) {
     const windowStart = new Date(now + w.msBefore - 15 * 60_000).toISOString();
     const windowEnd = new Date(now + w.msBefore).toISOString();
@@ -44,12 +45,10 @@ export async function GET(req: NextRequest) {
         .limit(1);
       if (already && already.length > 0) continue;
 
-      // TODO Week 3: build message body in the business's timezone and send
-      // via lib/messaging/send.ts; write result to notifications_log with
-      // one retry on failure (TRD §12).
-      queued += 1;
+      await notifyBooking(booking.id, w.type);
+      sent += 1;
     }
   }
 
-  return NextResponse.json({ ok: true, queued });
+  return NextResponse.json({ ok: true, sent });
 }

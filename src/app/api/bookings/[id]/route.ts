@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getOwnedBusiness } from "@/lib/supabase/server";
+import { notifyBooking } from "@/lib/messaging/notify";
 
 const updateBookingSchema = z.object({
   status: z.enum(["cancelled", "completed", "no_show"]).optional(),
@@ -32,7 +33,7 @@ export async function PATCH(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  // TODO Week 3: on cancellation, notify the customer (TRD Flow D).
+  if (parsed.data.status === "cancelled") await notifyBooking(data.id, "cancellation");
 
   return NextResponse.json(data);
 }
